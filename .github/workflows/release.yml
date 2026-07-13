@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -55,32 +54,27 @@ jobs:
           CGO_ENABLED: '0'
         run: |
           mkdir -p dist
-          go build -trimpath -ldflags "-s -w" -o "dist/gherkin-${{ github.ref_name }}-${{ matrix.name }}${{ matrix.ext }}" .
+          go build -trimpath -ldflags "-s -w" -o "dist/gherkin-${{ github.event.release.tag_name }}-${{ matrix.name }}${{ matrix.ext }}" .
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: gherkin-${{ matrix.name }}
-          path: dist/gherkin-${{ github.ref_name }}-${{ matrix.name }}${{ matrix.ext }}
+          path: dist/gherkin-${{ github.event.release.tag_name }}-${{ matrix.name }}${{ matrix.ext }}
 
   release:
-    name: Create draft release
+    name: Upload release binaries
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
 
-      - name: Create draft release with binaries
+      - name: Upload binaries to release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name }}
           files: dist/*
