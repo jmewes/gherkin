@@ -76,6 +76,7 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 	var stack []*frame
 	var docs []*messages.GherkinDocument
 	braceDepth := 0
+	hadInvalidNesting := false
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -93,18 +94,21 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 				}
 				opened = &frame{kind: frameDescribe, name: name, ancestors: ancestors}
 				// At most one level of nesting is supported: a single nested
-				// describe is interpreted as a Rule. Deeper nesting is rejected.
+				// describe is interpreted as a Rule. Deeper nesting is
+				// considered invalid.
 				if len(ancestors) > 1 {
-					return nil, errors.New("nested describe blocks are not supported when they contain tests")
+					hadInvalidNesting = true
 				}
-				// A Feature may contain at most one Rule. Multiple nested
-				// describe blocks inside the same describe are rejected.
+				// A Feature may contain at most one Rule. When multiple
+				// nested describe blocks sit inside the same describe, the
+				// file is considered invalid but we still parse it, emitting
+				// each nested describe as its own top-level Feature.
 				if len(ancestors) == 1 {
 					for i := len(stack) - 1; i >= 0; i-- {
 						if stack[i].kind == frameDescribe {
 							stack[i].nestedDescribeCount++
 							if stack[i].nestedDescribeCount > 1 {
-								return nil, errors.New("nested describe blocks are not supported when they contain tests")
+								hadInvalidNesting = true
 							}
 							break
 						}
@@ -223,6 +227,34 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 				if len(top.scenarios) == 0 && len(top.rules) == 0 {
 					break
 				}
+				// If the outer describe accumulated more than one nested
+				// describe, emit each rule as its own top-level Feature
+				// instead of nesting them under a single Feature.
+				if len(top.rules) > 1 {
+					for _, r := range top.rules {
+						var ruleChildren []*messages.FeatureChild
+						for _, rc := range r.Children {
+							if rc.Background != nil {
+								ruleChildren = append(ruleChildren, &messages.FeatureChild{Background: rc.Background})
+							}
+							if rc.Scenario != nil {
+								ruleChildren = append(ruleChildren, &messages.FeatureChild{Scenario: rc.Scenario})
+							}
+						}
+						uri := path + "/" + sanitizeURI(top.name) + "/" + sanitizeURI(r.Name)
+						if idx := strings.Index(uri, "src/app/"); idx >= 0 {
+							uri = uri[idx+len("src/app/"):]
+						}
+						docs = append(docs, &messages.GherkinDocument{
+							Uri: uri,
+							Feature: &messages.Feature{
+								Name:     r.Name,
+								Children: ruleChildren,
+							},
+						})
+					}
+					break
+				}
 				// Build children: background first, then scenarios, then rules.
 				var children []*messages.FeatureChild
 				if len(top.background) > 0 {
@@ -259,6 +291,9 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 		}
 	}
 
+	if hadInvalidNesting {
+		return docs, errors.New("nested describe blocks are not supported when they contain tests")
+	}
 	return docs, nil
 }
 

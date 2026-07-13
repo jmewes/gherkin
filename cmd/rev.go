@@ -52,10 +52,16 @@ func parseSpecSources(source string) ([]*messages.GherkinDocument, error) {
 		}
 
 		parsedDocs, parseErr := core.ParseSpecFile(path)
-		if parseErr != nil {
+		// Use any documents the parser managed to produce even when it
+		// reports an error, so partially-invalid spec files still yield
+		// their recognisable features instead of aborting the walk.
+		docs = append(docs, parsedDocs...)
+		if parseErr != nil && len(parsedDocs) == 0 {
 			return parseErr
 		}
-		docs = append(docs, parsedDocs...)
+		if parseErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: %s: %v\n", path, parseErr)
+		}
 		return nil
 	})
 	if err != nil {
@@ -91,8 +97,10 @@ func writeFeatureFiles(docs []*messages.GherkinDocument, targetDir string) error
 		}
 
 		uri := core.CalculateFeaturePath(doc.Uri)
+		relativeDir, baseName := featureFilePathPartsFromURI(uri)
+		baseName = sanitizeFeatureFileBaseName(baseName)
 
-		featurePath := filepath.Join(targetDir, uri+".feature")
+		featurePath := filepath.Join(targetDir, filepath.FromSlash(relativeDir), baseName+".feature")
 
 		if err := os.MkdirAll(filepath.Dir(featurePath), 0o755); err != nil {
 			return err
@@ -104,6 +112,22 @@ func writeFeatureFiles(docs []*messages.GherkinDocument, targetDir string) error
 	}
 
 	return nil
+}
+
+// sanitizeFeatureFileBaseName returns a filesystem-safe base name for a feature
+// file by replacing whitespace characters with underscores.
+func sanitizeFeatureFileBaseName(name string) string {
+	return strings.ReplaceAll(name, " ", "_")
+}
+
+// featureFilePathPartsFromURI splits a slash-separated feature URI into the
+// relative directory and the base name (the last segment).
+func featureFilePathPartsFromURI(uri string) (string, string) {
+	idx := strings.LastIndex(uri, "/")
+	if idx < 0 {
+		return "", uri
+	}
+	return uri[:idx], uri[idx+1:]
 }
 
 func renderFeatureDocument(doc *messages.GherkinDocument) string {
