@@ -15,6 +15,12 @@ For example, in TypeScript projects:
 - Nested "describe" block is mapped to "Rule"
 - "it" is mapped to "Scenario"
 
+Key features
+
+- Reverse engineer feature files from test files (Jasmine, Go, Java)
+- Create test file scaffold from feature files (Angular, Go, Java)
+- Export feature files into Jira syntax
+
 ## Installation
 
 ```sh
@@ -32,27 +38,8 @@ go test ./...
 ## Integration tests
 
 ```sh
-go run main.go rev --help
-```
-
-## Key features
-
-- Reverse engineer feature files from test files (Jasmine, Go, Java)
-- Create test file scaffold from feature files (Angular, Go, Java)
-- Export feature files into Jira syntax
-
-## GitHub issue commands
-
-Open the oldest issue in the browser:
-
-```sh
-open $(gh issue list --json url | jq -r '.[-1].url')
-```
-
-Open a specific issue (for example issue number 10) in the browser:
-
-```sh
-open "$(gh issue view 10 --json url | jq -r '.url')"
+TEMP_DIR=$(mktemp -d)
+go run main.go rev --source "$SOURCE_DIR" --target "$TEMP_DIR" && code $TEMP_DIR
 ```
 
 ## Maintenance

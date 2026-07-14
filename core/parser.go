@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	messages "github.com/cucumber/messages/go/v28"
+	"github.com/experimental-software/gherkin/utils"
 )
 
 // normalizeScenarioTitle strips a leading "should " prefix (case-insensitive).
@@ -241,7 +242,7 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 								ruleChildren = append(ruleChildren, &messages.FeatureChild{Scenario: rc.Scenario})
 							}
 						}
-						uri := path + "/" + sanitizeURI(top.name) + "/" + sanitizeURI(r.Name)
+						uri := path + "/" + utils.ToKebabCase(top.name) + "/" + utils.ToKebabCase(r.Name)
 						if idx := strings.Index(uri, "src/app/"); idx >= 0 {
 							uri = uri[idx+len("src/app/"):]
 						}
@@ -271,7 +272,7 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 				// Uri = path + "/" + joined ancestor describe names + "/" + this name.
 				var uriParts []string
 				for _, p := range append(top.ancestors, top.name) {
-					uriParts = append(uriParts, sanitizeURI(p))
+					uriParts = append(uriParts, utils.ToKebabCase(p))
 				}
 				uri := path + "/" + strings.Join(uriParts, "/")
 				// Extract substring after "src/app/"
@@ -301,15 +302,3 @@ func isIdentChar(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 }
 
-func sanitizeURI(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
-			b.WriteRune(r)
-		} else {
-			b.WriteRune('_')
-		}
-	}
-	result := b.String()
-	return regexp.MustCompile(`_+`).ReplaceAllString(result, "_")
-}

@@ -99,8 +99,8 @@ func TestWriteFeatureFiles_DiscardsSpecFileName(t *testing.T) {
 		t.Fatalf("unexpected write error: %v", err)
 	}
 
-	// Given an URI like core/testdata/sample.spec.ts/User_authentication
-	// core.CalculateFeaturePath(docs[0].Uri) should give core/testdata/User_authentication
+	// Given an URI like core/testdata/sample.spec.ts/user-authentication
+	// core.CalculateFeaturePath(docs[0].Uri) should give core/testdata/user-authentication
 	uri := core.CalculateFeaturePath(docs[0].Uri)
 	relativeDir, baseName := featureFilePathPartsFromURI(uri)
 	featurePath := filepath.Join(targetDir, filepath.FromSlash(relativeDir), baseName+".feature")
