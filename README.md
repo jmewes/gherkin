@@ -41,6 +41,31 @@ go run main.go rev --help
 - Create test file scaffold from feature files (Angular, Go, Java)
 - Export feature files into Jira syntax
 
+## GitHub issue commands
+
+Open the oldest issue in the browser:
+
+```sh
+open $(gh issue list --json url | jq -r '.[-1].url')
+```
+
+Open a specific issue (for example issue number 10) in the browser:
+
+```sh
+open "$(gh issue view 10 --json url | jq -r '.url')"
+```
+
+## Maintenance
+
+### Open GitHub issue in the browser
+
+If the GitHub CLI tool `gh` is installed, the description for a ticket can be opened like this:
+
+```sh
+ISSUE_NUMBER=10
+gh issue view ${ISSUE_NUMBER} --json url
+```
+
 ## References
 
 - https://cucumber.io/docs/gherkin/reference/
