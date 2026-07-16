@@ -55,18 +55,16 @@ func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	}
 
 	// Then "Foo" is not interpreted as feature because it has no tests
-	// And "Bar" is interpreted as separate feature with the scenario "should boogle"
-	// And "Ooogle" is interpreted as separate feature with the scenario "should quux"
 	if len(docs) != 2 {
 		t.Fatalf("Expected 2 GherkinDocuments, got %d", len(docs))
 	}
-
 	for _, doc := range docs {
 		if doc.Feature.Name == "Foo" {
 			t.Errorf("Did not expect a feature named 'Foo'")
 		}
 	}
 
+	// And "Bar" is interpreted as separate feature with the scenario "should boogle"
 	bar := docs[0].Feature
 	if bar.Name != "Bar" {
 		t.Errorf("Expected first feature name 'Bar', got '%s'", bar.Name)
@@ -84,6 +82,7 @@ func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 		t.Errorf("Expected scenario name 'boogle', got '%s'", barScenarios[0].Name)
 	}
 
+	// And "Ooogle" is interpreted as separate feature with the scenario "should quux"
 	oogle := docs[1].Feature
 	if oogle.Name != "Oogle" {
 		t.Errorf("Expected second feature name 'Oogle', got '%s'", oogle.Name)
