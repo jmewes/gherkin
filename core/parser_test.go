@@ -2,6 +2,8 @@ package core
 
 import (
 	"testing"
+
+	messages "github.com/cucumber/messages/go/v28"
 )
 
 func TestMinimalTestFile(t *testing.T) {
@@ -40,27 +42,64 @@ func TestMinimalTestFile(t *testing.T) {
 	}
 }
 
-func TestRejectScenariosInNestedDescribe(t *testing.T) {
-	// Given a test file where the "it" blocks are in nested "describe" blocks
-	specPath := "testdata/invalid-nested-source-file.spec.ts"
-
-	// When the Gherkin document is parsed
-	_, err := ParseSpecFile(specPath)
-
-	// Then there is an error
-	if err == nil {
-		t.Error("Expected an error when parsing a file with nested describe blocks containing it blocks, but got nil")
-	}
-}
-
 func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	// Given a "describe" block without tests (Foo)
 	// but a nested "describe" block with tests (Bar),
 	// And the nested "describe" block has a nested "describe" block itself (Oogle)
+	specPath := "testdata/nested-describe-blocks.spec.ts"
+
 	// When the spec file gets parsed,
+	docs, err := ParseSpecFile(specPath)
+	if err != nil {
+		t.Fatalf("ParseSpecFile failed: %v", err)
+	}
+
 	// Then "Foo" is not interpreted as feature because it has no tests
 	// And "Bar" is interpreted as separate feature with the scenario "should boogle"
 	// And "Ooogle" is interpreted as separate feature with the scenario "should quux"
+	if len(docs) != 2 {
+		t.Fatalf("Expected 2 GherkinDocuments, got %d", len(docs))
+	}
+
+	for _, doc := range docs {
+		if doc.Feature.Name == "Foo" {
+			t.Errorf("Did not expect a feature named 'Foo'")
+		}
+	}
+
+	bar := docs[0].Feature
+	if bar.Name != "Bar" {
+		t.Errorf("Expected first feature name 'Bar', got '%s'", bar.Name)
+	}
+	var barScenarios []*messages.Scenario
+	for _, c := range bar.Children {
+		if c.Scenario != nil {
+			barScenarios = append(barScenarios, c.Scenario)
+		}
+	}
+	if len(barScenarios) != 1 {
+		t.Fatalf("Expected 1 scenario in 'Bar', got %d", len(barScenarios))
+	}
+	if barScenarios[0].Name != "boogle" {
+		t.Errorf("Expected scenario name 'boogle', got '%s'", barScenarios[0].Name)
+	}
+
+	oogle := docs[1].Feature
+	if oogle.Name != "Oogle" {
+		t.Errorf("Expected second feature name 'Oogle', got '%s'", oogle.Name)
+	}
+	var oogleScenarios []*messages.Scenario
+	for _, c := range oogle.Children {
+		if c.Scenario != nil {
+			oogleScenarios = append(oogleScenarios, c.Scenario)
+		}
+	}
+	if len(oogleScenarios) != 1 {
+		t.Fatalf("Expected 1 scenario in 'Oogle', got %d", len(oogleScenarios))
+	}
+	if oogleScenarios[0].Name != "quuux" {
+		t.Errorf("Expected scenario name 'quuux', got '%s'", oogleScenarios[0].Name)
+	}
 }
 
 func TestParseTestWithRule(t *testing.T) {

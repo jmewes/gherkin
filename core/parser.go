@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"os"
 	"regexp"
 	"strings"
@@ -54,15 +53,14 @@ const (
 )
 
 type frame struct {
-	kind                string
-	name                string   // describe or it title
-	ancestors           []string // ancestor describe names (for describe frames)
-	depth               int      // brace depth when this frame was opened
-	steps               []*messages.Step
-	scenarios           []*messages.Scenario
-	background          []*messages.Step
-	rules               []*messages.Rule // nested describe blocks interpreted as Rules
-	nestedDescribeCount int              // number of nested describe blocks opened directly inside this describe
+	kind       string
+	name       string // describe or it title
+	ancestors  []string // ancestor describe names (for describe frames)
+	depth      int    // brace depth when this frame was opened
+	steps      []*messages.Step
+	scenarios  []*messages.Scenario
+	background []*messages.Step
+	children   []*frame // nested describe frames
 }
 
 // ParseSpecFile reads a Jasmine *.spec.ts file and converts its
@@ -75,9 +73,8 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 	lines := strings.Split(string(data), "\n")
 
 	var stack []*frame
-	var docs []*messages.GherkinDocument
+	var topLevelDescribes []*frame
 	braceDepth := 0
-	hadInvalidNesting := false
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -94,27 +91,6 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 					}
 				}
 				opened = &frame{kind: frameDescribe, name: name, ancestors: ancestors}
-				// At most one level of nesting is supported: a single nested
-				// describe is interpreted as a Rule. Deeper nesting is
-				// considered invalid.
-				if len(ancestors) > 1 {
-					hadInvalidNesting = true
-				}
-				// A Feature may contain at most one Rule. When multiple
-				// nested describe blocks sit inside the same describe, the
-				// file is considered invalid but we still parse it, emitting
-				// each nested describe as its own top-level Feature.
-				if len(ancestors) == 1 {
-					for i := len(stack) - 1; i >= 0; i-- {
-						if stack[i].kind == frameDescribe {
-							stack[i].nestedDescribeCount++
-							if stack[i].nestedDescribeCount > 1 {
-								hadInvalidNesting = true
-							}
-							break
-						}
-					}
-				}
 			}
 		} else if strings.Contains(trimmed, "beforeEach(") {
 			opened = &frame{kind: frameBeforeEach}
@@ -197,105 +173,145 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 				}
 
 			case frameDescribe:
-				// A nested describe is interpreted as a Rule and attached to
-				// its enclosing Feature describe.
 				if len(top.ancestors) > 0 {
-					if len(top.scenarios) == 0 {
-						break
-					}
-					var ruleChildren []*messages.RuleChild
-					if len(top.background) > 0 {
-						ruleChildren = append(ruleChildren, &messages.RuleChild{
-							Background: &messages.Background{Steps: top.background},
-						})
-					}
-					for _, sc := range top.scenarios {
-						ruleChildren = append(ruleChildren, &messages.RuleChild{Scenario: sc})
-					}
-					rule := &messages.Rule{
-						Name:     top.name,
-						Children: ruleChildren,
-					}
+					// Attach to enclosing describe for later processing.
 					for i := len(stack) - 1; i >= 0; i-- {
 						if stack[i].kind == frameDescribe {
-							stack[i].rules = append(stack[i].rules, rule)
+							stack[i].children = append(stack[i].children, top)
 							break
 						}
 					}
-					break
+				} else {
+					topLevelDescribes = append(topLevelDescribes, top)
 				}
-
-				if len(top.scenarios) == 0 && len(top.rules) == 0 {
-					break
-				}
-				// If the outer describe accumulated more than one nested
-				// describe, emit each rule as its own top-level Feature
-				// instead of nesting them under a single Feature.
-				if len(top.rules) > 1 {
-					for _, r := range top.rules {
-						var ruleChildren []*messages.FeatureChild
-						for _, rc := range r.Children {
-							if rc.Background != nil {
-								ruleChildren = append(ruleChildren, &messages.FeatureChild{Background: rc.Background})
-							}
-							if rc.Scenario != nil {
-								ruleChildren = append(ruleChildren, &messages.FeatureChild{Scenario: rc.Scenario})
-							}
-						}
-						uri := path + "/" + utils.ToKebabCase(top.name) + "/" + utils.ToKebabCase(r.Name)
-						if idx := strings.Index(uri, "src/app/"); idx >= 0 {
-							uri = uri[idx+len("src/app/"):]
-						}
-						docs = append(docs, &messages.GherkinDocument{
-							Uri: uri,
-							Feature: &messages.Feature{
-								Name:     r.Name,
-								Children: ruleChildren,
-							},
-						})
-					}
-					break
-				}
-				// Build children: background first, then scenarios, then rules.
-				var children []*messages.FeatureChild
-				if len(top.background) > 0 {
-					children = append(children, &messages.FeatureChild{
-						Background: &messages.Background{Steps: top.background},
-					})
-				}
-				for _, sc := range top.scenarios {
-					children = append(children, &messages.FeatureChild{Scenario: sc})
-				}
-				for _, r := range top.rules {
-					children = append(children, &messages.FeatureChild{Rule: r})
-				}
-				// Uri = path + "/" + joined ancestor describe names + "/" + this name.
-				var uriParts []string
-				for _, p := range append(top.ancestors, top.name) {
-					uriParts = append(uriParts, utils.ToKebabCase(p))
-				}
-				uri := path + "/" + strings.Join(uriParts, "/")
-				// Extract substring after "src/app/"
-				if idx := strings.Index(uri, "src/app/"); idx >= 0 {
-					uri = uri[idx+len("src/app/"):]
-				}
-
-				doc := &messages.GherkinDocument{
-					Uri: uri,
-					Feature: &messages.Feature{
-						Name:     top.name,
-						Children: children,
-					},
-				}
-				docs = append(docs, doc)
 			}
 		}
 	}
 
-	if hadInvalidNesting {
-		return docs, errors.New("nested describe blocks are not supported when they contain tests")
+	var docs []*messages.GherkinDocument
+	for _, d := range topLevelDescribes {
+		emitDescribe(d, path, nil, &docs)
 	}
 	return docs, nil
+}
+
+// hasTests reports whether the describe frame contains scenarios directly or
+// in any transitively nested describe.
+func hasTests(d *frame) bool {
+	if len(d.scenarios) > 0 {
+		return true
+	}
+	for _, c := range d.children {
+		if hasTests(c) {
+			return true
+		}
+	}
+	return false
+}
+
+// emitDescribe converts a describe frame (and its nested describes) into one
+// or more GherkinDocuments and appends them to docs. The uriAncestors argument
+// contains the describe names that lead to the current frame but were skipped
+// during emission (i.e. their parent describes had no scenarios and were not
+// themselves emitted as Features).
+func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*messages.GherkinDocument) {
+	var testChildren []*frame
+	for _, c := range d.children {
+		if hasTests(c) {
+			testChildren = append(testChildren, c)
+		}
+	}
+
+	// Case: describe with no test-bearing children.
+	if len(testChildren) == 0 {
+		if len(d.scenarios) == 0 {
+			return
+		}
+		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, nil))
+		return
+	}
+
+	// Case: describe has scenarios and nested test-bearing describes.
+	// Emit this describe as its own Feature (with just its direct
+	// scenarios), and each test-bearing child as a separate top-level
+	// Feature.
+	if len(d.scenarios) > 0 {
+		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, nil))
+		childAncestors := append(append([]string{}, uriAncestors...), d.name)
+		for _, c := range testChildren {
+			emitDescribe(c, path, childAncestors, docs)
+		}
+		return
+	}
+
+	// Case: describe has no scenarios and exactly one test-bearing child,
+	// and that child has no further test-bearing descendants: represent
+	// the child as a Rule under this describe.
+	if len(testChildren) == 1 {
+		c := testChildren[0]
+		var grandTestChildren int
+		for _, gc := range c.children {
+			if hasTests(gc) {
+				grandTestChildren++
+			}
+		}
+		if grandTestChildren == 0 {
+			*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, c))
+			return
+		}
+	}
+
+	// Otherwise: don't emit this describe; promote each test-bearing child.
+	childAncestors := append(append([]string{}, uriAncestors...), d.name)
+	for _, c := range testChildren {
+		emitDescribe(c, path, childAncestors, docs)
+	}
+}
+
+// buildFeatureDoc builds a GherkinDocument for describe d. If rule is non-nil,
+// it is attached as a Rule feature child (from the given nested describe).
+func buildFeatureDoc(d *frame, path string, uriAncestors []string, rule *frame) *messages.GherkinDocument {
+	var children []*messages.FeatureChild
+	if len(d.background) > 0 {
+		children = append(children, &messages.FeatureChild{
+			Background: &messages.Background{Steps: d.background},
+		})
+	}
+	for _, sc := range d.scenarios {
+		children = append(children, &messages.FeatureChild{Scenario: sc})
+	}
+	if rule != nil {
+		var ruleChildren []*messages.RuleChild
+		if len(rule.background) > 0 {
+			ruleChildren = append(ruleChildren, &messages.RuleChild{
+				Background: &messages.Background{Steps: rule.background},
+			})
+		}
+		for _, sc := range rule.scenarios {
+			ruleChildren = append(ruleChildren, &messages.RuleChild{Scenario: sc})
+		}
+		children = append(children, &messages.FeatureChild{Rule: &messages.Rule{
+			Name:     rule.name,
+			Children: ruleChildren,
+		}})
+	}
+
+	var uriParts []string
+	for _, p := range append(append([]string{}, uriAncestors...), d.name) {
+		uriParts = append(uriParts, utils.ToKebabCase(p))
+	}
+	uri := path + "/" + strings.Join(uriParts, "/")
+	if idx := strings.Index(uri, "src/app/"); idx >= 0 {
+		uri = uri[idx+len("src/app/"):]
+	}
+
+	return &messages.GherkinDocument{
+		Uri: uri,
+		Feature: &messages.Feature{
+			Name:     d.name,
+			Children: children,
+		},
+	}
 }
 
 func isIdentChar(c byte) bool {

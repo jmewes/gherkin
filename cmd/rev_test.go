@@ -26,7 +26,7 @@ func TestParseSpecSources_DirectoryRecursive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read sample fixture: %v", err)
 	}
-	nestedContent, err := os.ReadFile("../core/testdata/invalid-nested-source-file.spec.ts")
+	nestedContent, err := os.ReadFile("../core/testdata/nested-describe-blocks.spec.ts")
 	if err != nil {
 		t.Fatalf("failed to read nested fixture: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestParseSpecSources_DirectoryRecursive(t *testing.T) {
 	if err := os.MkdirAll(nestedDir, 0o755); err != nil {
 		t.Fatalf("failed to create nested directory: %v", err)
 	}
-	nestedTarget := filepath.Join(nestedDir, "invalid-nested-source-file.spec.ts")
+	nestedTarget := filepath.Join(nestedDir, "nested-describe-blocks.spec.ts")
 	if err := os.WriteFile(nestedTarget, nestedContent, 0o644); err != nil {
 		t.Fatalf("failed to write nested fixture: %v", err)
 	}
