@@ -53,12 +53,22 @@ func TestRejectScenariosInNestedDescribe(t *testing.T) {
 	}
 }
 
+func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
+	// Given a "describe" block without tests (Foo)
+	// but a nested "describe" block with tests (Bar),
+	// And the nested "describe" block has a nested "describe" block itself (Oogle)
+	// When the spec file gets parsed,
+	// Then "Foo" is not interpreted as feature because it has no tests
+	// And "Bar" is interpreted as separate feature with the scenario "should boogle"
+	// And "Ooogle" is interpreted as separate feature with the scenario "should quux"
+}
+
 func TestParseTestWithRule(t *testing.T) {
-	//Given a test file that has a nested "describe" block
-	//And inside the second "describe" block there are "it" blocks
+	// Given a test file that has a nested "describe" block
+	// And inside the second "describe" block there are "it" blocks
 	specPath := "testdata/with-rule.spec.ts"
 
-	//When the Gherkin document is parsed
+	// When the Gherkin document is parsed
 	docs, err := ParseSpecFile(specPath)
 	if err != nil {
 		t.Fatalf("ParseSpecFile failed: %v", err)
@@ -70,7 +80,7 @@ func TestParseTestWithRule(t *testing.T) {
 
 	doc := docs[0]
 
-	//Then the first "describe" block is interpreted as "Feature"
+	// Then the first "describe" block is interpreted as "Feature"
 	if doc.Feature.Name != "Foo" {
 		t.Errorf("Expected Feature name 'Foo', got '%s'", doc.Feature.Name)
 	}
@@ -79,7 +89,7 @@ func TestParseTestWithRule(t *testing.T) {
 		t.Fatalf("Expected 1 feature child, got %d", len(doc.Feature.Children))
 	}
 
-	//And the second "describe" block is interpreted as "Rule"
+	// And the second "describe" block is interpreted as "Rule"
 	rule := doc.Feature.Children[0].Rule
 	if rule == nil {
 		t.Fatalf("Expected the feature child to be a Rule, got %+v", doc.Feature.Children[0])
@@ -88,7 +98,7 @@ func TestParseTestWithRule(t *testing.T) {
 		t.Errorf("Expected Rule name 'Tax rate of 5.5%%', got '%s'", rule.Name)
 	}
 
-	//And the "it" blocks are interpreted as "Scenarios" inside the "Rule"
+	// And the "it" blocks are interpreted as "Scenarios" inside the "Rule"
 	if len(rule.Children) != 1 {
 		t.Fatalf("Expected 1 rule child, got %d", len(rule.Children))
 	}
