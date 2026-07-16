@@ -7,10 +7,6 @@ import (
 	messages "github.com/cucumber/messages/go/v28"
 )
 
-func Foo() {
-	// noop
-}
-
 // ParseFeatureFile opens the file at path and parses it into a GherkinDocument.
 func ParseFeatureFile(path string) (*messages.GherkinDocument, error) {
 	f, err := os.Open(path)

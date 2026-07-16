@@ -5,11 +5,11 @@ import (
 )
 
 func TestMinimalTestFile(t *testing.T) {
-	//Given a test file that has a "describe" block
-	//And two "it" blocks
+	// Given a test file that has a "describe" block
+	// And two "it" blocks
 	specPath := "testdata/sample.spec.ts"
 
-	//When the Gherkin document is parsed
+	// When the Gherkin document is parsed
 	docs, err := ParseSpecFile(specPath)
 	if err != nil {
 		t.Fatalf("ParseSpecFile failed: %v", err)
@@ -21,12 +21,12 @@ func TestMinimalTestFile(t *testing.T) {
 
 	doc := docs[0]
 
-	//Then the description of the "describe" block becomes the Feature name of the Gherkin document
+	// Then the description of the "describe" block becomes the Feature name of the Gherkin document
 	if doc.Feature.Name != "User authentication" {
 		t.Errorf("Expected Feature name 'User authentication', got '%s'", doc.Feature.Name)
 	}
 
-	//And the "it" blocks are mapped to Scenarios
+	// And the "it" blocks are mapped to Scenarios
 	if len(doc.Feature.Children) != 2 {
 		t.Fatalf("Expected 2 scenarios, got %d", len(doc.Feature.Children))
 	}
@@ -41,13 +41,13 @@ func TestMinimalTestFile(t *testing.T) {
 }
 
 func TestRejectScenariosInNestedDescribe(t *testing.T) {
-	//Given a test file where the "it" blocks are in nested "describe" blocks
+	// Given a test file where the "it" blocks are in nested "describe" blocks
 	specPath := "testdata/invalid-nested-source-file.spec.ts"
 
-	//When the Gherkin document is parsed
+	// When the Gherkin document is parsed
 	_, err := ParseSpecFile(specPath)
 
-	//Then there is an error
+	// Then there is an error
 	if err == nil {
 		t.Error("Expected an error when parsing a file with nested describe blocks containing it blocks, but got nil")
 	}
