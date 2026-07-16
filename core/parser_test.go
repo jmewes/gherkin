@@ -2,14 +2,16 @@ package core
 
 import (
 	"testing"
+
+	messages "github.com/cucumber/messages/go/v28"
 )
 
 func TestMinimalTestFile(t *testing.T) {
-	//Given a test file that has a "describe" block
-	//And two "it" blocks
+	// Given a test file that has a "describe" block
+	// And two "it" blocks
 	specPath := "testdata/sample.spec.ts"
 
-	//When the Gherkin document is parsed
+	// When the Gherkin document is parsed
 	docs, err := ParseSpecFile(specPath)
 	if err != nil {
 		t.Fatalf("ParseSpecFile failed: %v", err)
@@ -21,12 +23,12 @@ func TestMinimalTestFile(t *testing.T) {
 
 	doc := docs[0]
 
-	//Then the description of the "describe" block becomes the Feature name of the Gherkin document
+	// Then the description of the "describe" block becomes the Feature name of the Gherkin document
 	if doc.Feature.Name != "User authentication" {
 		t.Errorf("Expected Feature name 'User authentication', got '%s'", doc.Feature.Name)
 	}
 
-	//And the "it" blocks are mapped to Scenarios
+	// And the "it" blocks are mapped to Scenarios
 	if len(doc.Feature.Children) != 2 {
 		t.Fatalf("Expected 2 scenarios, got %d", len(doc.Feature.Children))
 	}
@@ -40,25 +42,71 @@ func TestMinimalTestFile(t *testing.T) {
 	}
 }
 
-func TestRejectScenariosInNestedDescribe(t *testing.T) {
-	//Given a test file where the "it" blocks are in nested "describe" blocks
-	specPath := "testdata/invalid-nested-source-file.spec.ts"
+func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
+	// Given a "describe" block without tests (Foo)
+	// but a nested "describe" block with tests (Bar),
+	// And the nested "describe" block has a nested "describe" block itself (Oogle)
+	specPath := "testdata/nested-describe-blocks.spec.ts"
 
-	//When the Gherkin document is parsed
-	_, err := ParseSpecFile(specPath)
+	// When the spec file gets parsed,
+	docs, err := ParseSpecFile(specPath)
+	if err != nil {
+		t.Fatalf("ParseSpecFile failed: %v", err)
+	}
 
-	//Then there is an error
-	if err == nil {
-		t.Error("Expected an error when parsing a file with nested describe blocks containing it blocks, but got nil")
+	// Then "Foo" is not interpreted as feature because it has no tests
+	if len(docs) != 2 {
+		t.Fatalf("Expected 2 GherkinDocuments, got %d", len(docs))
+	}
+	for _, doc := range docs {
+		if doc.Feature.Name == "Foo" {
+			t.Errorf("Did not expect a feature named 'Foo'")
+		}
+	}
+
+	// And "Bar" is interpreted as separate feature with the scenario "should boogle"
+	bar := docs[0].Feature
+	if bar.Name != "Bar" {
+		t.Errorf("Expected first feature name 'Bar', got '%s'", bar.Name)
+	}
+	var barScenarios []*messages.Scenario
+	for _, c := range bar.Children {
+		if c.Scenario != nil {
+			barScenarios = append(barScenarios, c.Scenario)
+		}
+	}
+	if len(barScenarios) != 1 {
+		t.Fatalf("Expected 1 scenario in 'Bar', got %d", len(barScenarios))
+	}
+	if barScenarios[0].Name != "boogle" {
+		t.Errorf("Expected scenario name 'boogle', got '%s'", barScenarios[0].Name)
+	}
+
+	// And "Ooogle" is interpreted as separate feature with the scenario "should quux"
+	oogle := docs[1].Feature
+	if oogle.Name != "Oogle" {
+		t.Errorf("Expected second feature name 'Oogle', got '%s'", oogle.Name)
+	}
+	var oogleScenarios []*messages.Scenario
+	for _, c := range oogle.Children {
+		if c.Scenario != nil {
+			oogleScenarios = append(oogleScenarios, c.Scenario)
+		}
+	}
+	if len(oogleScenarios) != 1 {
+		t.Fatalf("Expected 1 scenario in 'Oogle', got %d", len(oogleScenarios))
+	}
+	if oogleScenarios[0].Name != "quuux" {
+		t.Errorf("Expected scenario name 'quuux', got '%s'", oogleScenarios[0].Name)
 	}
 }
 
 func TestParseTestWithRule(t *testing.T) {
-	//Given a test file that has a nested "describe" block
-	//And inside the second "describe" block there are "it" blocks
+	// Given a test file that has a nested "describe" block
+	// And inside the second "describe" block there are "it" blocks
 	specPath := "testdata/with-rule.spec.ts"
 
-	//When the Gherkin document is parsed
+	// When the Gherkin document is parsed
 	docs, err := ParseSpecFile(specPath)
 	if err != nil {
 		t.Fatalf("ParseSpecFile failed: %v", err)
@@ -70,7 +118,7 @@ func TestParseTestWithRule(t *testing.T) {
 
 	doc := docs[0]
 
-	//Then the first "describe" block is interpreted as "Feature"
+	// Then the first "describe" block is interpreted as "Feature"
 	if doc.Feature.Name != "Foo" {
 		t.Errorf("Expected Feature name 'Foo', got '%s'", doc.Feature.Name)
 	}
@@ -79,7 +127,7 @@ func TestParseTestWithRule(t *testing.T) {
 		t.Fatalf("Expected 1 feature child, got %d", len(doc.Feature.Children))
 	}
 
-	//And the second "describe" block is interpreted as "Rule"
+	// And the second "describe" block is interpreted as "Rule"
 	rule := doc.Feature.Children[0].Rule
 	if rule == nil {
 		t.Fatalf("Expected the feature child to be a Rule, got %+v", doc.Feature.Children[0])
@@ -88,7 +136,7 @@ func TestParseTestWithRule(t *testing.T) {
 		t.Errorf("Expected Rule name 'Tax rate of 5.5%%', got '%s'", rule.Name)
 	}
 
-	//And the "it" blocks are interpreted as "Scenarios" inside the "Rule"
+	// And the "it" blocks are interpreted as "Scenarios" inside the "Rule"
 	if len(rule.Children) != 1 {
 		t.Fatalf("Expected 1 rule child, got %d", len(rule.Children))
 	}
