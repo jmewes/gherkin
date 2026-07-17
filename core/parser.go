@@ -250,8 +250,6 @@ func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*message
 	}
 }
 
-// buildFeatureDoc builds a GherkinDocument for describe d. If rule is non-nil,
-// it is attached as a Rule feature child (from the given nested describe).
 func buildFeatureDoc(d *frame, path string, uriAncestors []string, rule *frame) *messages.GherkinDocument {
 	var children []*messages.FeatureChild
 	if len(d.background) > 0 {
