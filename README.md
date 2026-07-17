@@ -66,7 +66,7 @@ gh issue view ${ISSUE_NUMBER} --json url
 
 **Annotated Textual Descriptions of Processes (ATDP)**
 
-- [Process Extraction from Text: Benchmarking the State of the Art and Paving the Way for Future Challenges | Patrizio Bellan et al. | arxiv.org](https://arxiv.org/pdf/2110.03754)
+- [Process Extraction from Text | Patrizio Bellan et al. | arxiv.org](https://arxiv.org/pdf/2110.03754)
 
 ## References
 
