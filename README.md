@@ -56,6 +56,8 @@ gh issue view ${ISSUE_NUMBER} --json url
 ## Alternatives
 
 - [Cucumber](https://cucumber.io/)
+- [Structured-Prompt-Driven Development (SPDD) | Wei Zhang, Jessie Jie Xia | martinfowler.com](https://martinfowler.com/articles/structured-prompt-driven)
+- [AI Unified Process (AIUP)](https://unifiedprocess.ai/)
 - [Process Extraction from Text](https://arxiv.org/pdf/2110.03754)
 - Annotated Textual Descriptions of Processes (ATDP)
 
