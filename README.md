@@ -57,6 +57,7 @@ gh issue view ${ISSUE_NUMBER} --json url
 
 - [Cucumber](https://cucumber.io/)
 - [Process Extraction from Text](https://arxiv.org/pdf/2110.03754)
+- Annotated Textual Descriptions of Processes (ATDP)
 
 ## References
 
