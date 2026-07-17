@@ -53,6 +53,11 @@ ISSUE_NUMBER=10
 gh issue view ${ISSUE_NUMBER} --json url
 ```
 
+## Alternatives
+
+- [Cucumber](https://cucumber.io/)
+- [Process Extraction from Text](https://arxiv.org/pdf/2110.03754)
+
 ## References
 
 - https://cucumber.io/docs/gherkin/reference/
