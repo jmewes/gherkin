@@ -54,9 +54,9 @@ const (
 
 type frame struct {
 	kind       string
-	name       string // describe or it title
+	name       string   // describe or it title
 	ancestors  []string // ancestor describe names (for describe frames)
-	depth      int    // brace depth when this frame was opened
+	depth      int      // brace depth when this frame was opened
 	steps      []*messages.Step
 	scenarios  []*messages.Scenario
 	background []*messages.Step
@@ -244,24 +244,6 @@ func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*message
 		return
 	}
 
-	// Case: describe has no scenarios and exactly one test-bearing child,
-	// and that child has no further test-bearing descendants: represent
-	// the child as a Rule under this describe.
-	if len(testChildren) == 1 {
-		c := testChildren[0]
-		var grandTestChildren int
-		for _, gc := range c.children {
-			if hasTests(gc) {
-				grandTestChildren++
-			}
-		}
-		if grandTestChildren == 0 {
-			*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, c))
-			return
-		}
-	}
-
-	// Otherwise: don't emit this describe; promote each test-bearing child.
 	childAncestors := append(append([]string{}, uriAncestors...), d.name)
 	for _, c := range testChildren {
 		emitDescribe(c, path, childAncestors, docs)
@@ -317,4 +299,3 @@ func buildFeatureDoc(d *frame, path string, uriAncestors []string, rule *frame) 
 func isIdentChar(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 }
-
