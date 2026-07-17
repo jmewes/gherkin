@@ -227,7 +227,7 @@ func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*message
 		if len(d.scenarios) == 0 {
 			return
 		}
-		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, nil))
+		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors))
 		return
 	}
 
@@ -236,7 +236,7 @@ func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*message
 	// scenarios), and each test-bearing child as a separate top-level
 	// Feature.
 	if len(d.scenarios) > 0 {
-		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors, nil))
+		*docs = append(*docs, buildFeatureDoc(d, path, uriAncestors))
 		childAncestors := append(append([]string{}, uriAncestors...), d.name)
 		for _, c := range testChildren {
 			emitDescribe(c, path, childAncestors, docs)
@@ -250,7 +250,7 @@ func emitDescribe(d *frame, path string, uriAncestors []string, docs *[]*message
 	}
 }
 
-func buildFeatureDoc(d *frame, path string, uriAncestors []string, rule *frame) *messages.GherkinDocument {
+func buildFeatureDoc(d *frame, path string, uriAncestors []string) *messages.GherkinDocument {
 	var children []*messages.FeatureChild
 	if len(d.background) > 0 {
 		children = append(children, &messages.FeatureChild{
@@ -259,21 +259,6 @@ func buildFeatureDoc(d *frame, path string, uriAncestors []string, rule *frame) 
 	}
 	for _, sc := range d.scenarios {
 		children = append(children, &messages.FeatureChild{Scenario: sc})
-	}
-	if rule != nil {
-		var ruleChildren []*messages.RuleChild
-		if len(rule.background) > 0 {
-			ruleChildren = append(ruleChildren, &messages.RuleChild{
-				Background: &messages.Background{Steps: rule.background},
-			})
-		}
-		for _, sc := range rule.scenarios {
-			ruleChildren = append(ruleChildren, &messages.RuleChild{Scenario: sc})
-		}
-		children = append(children, &messages.FeatureChild{Rule: &messages.Rule{
-			Name:     rule.name,
-			Children: ruleChildren,
-		}})
 	}
 
 	var uriParts []string
