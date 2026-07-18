@@ -25,13 +25,13 @@ Key features
 
 The tool allows reverse engineering of existing code into specification documents:
 
-| <img src="./docs/300x180.svg" /> | <img src="./docs/300x180.svg" /> | <img src="./docs/spec.png" /> |
+| <img src="./docs/300x180.png" /> | <img src="./docs/300x180.png" /> | <img src="./docs/spec.png" /> |
 | --- | --- | --- |
 | Existing code → | Feature files → | Specification |
 
 This is done to explore the possibility of specification-driven development based on Gherkin scenarios:
 
-| <img src="./docs/spec.png" /> | <img src="./docs/300x180.svg" /> | <img src="./docs/300x180.svg" /> |
+| <img src="./docs/spec.png" /> | <img src="./docs/300x180.png" /> | <img src="./docs/300x180.png" /> |
 | --- | --- | --- |
 | Specification →  | Test definition → | Generated code |
 
