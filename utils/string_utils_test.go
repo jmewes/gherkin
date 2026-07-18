@@ -25,6 +25,21 @@ func TestConvertStringToKebabCase(t *testing.T) {
 			s:        "Bar",
 			expected: "bar",
 		},
+		{
+			name:     "upper camel case",
+			s:        "JustATest",
+			expected: "just-a-test",
+		},
+		{
+			name:     "lower camel case",
+			s:        "justATest",
+			expected: "just-a-test",
+		},
+		{
+			name:     "TBD",
+			s:        "resource_Name_test",
+			expected: "resource-name-test",
+		},
 	}
 
 	for _, tc := range testCases {

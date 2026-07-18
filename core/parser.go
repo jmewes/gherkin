@@ -271,7 +271,7 @@ func buildFeatureDoc(d *frame, path string, uriAncestors []string) *messages.Ghe
 	}
 
 	return &messages.GherkinDocument{
-		Uri: uri,
+		Uri: normalizeUri(uri),
 		Feature: &messages.Feature{
 			Name:     d.name,
 			Children: children,
@@ -281,4 +281,18 @@ func buildFeatureDoc(d *frame, path string, uriAncestors []string) *messages.Ghe
 
 func isIdentChar(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+}
+
+func normalizeUri(path string) string {
+	result := ""
+	pathParts := strings.Split(path, "/")
+	for i := 0; i < len(pathParts); i++ {
+		pathPart := pathParts[i]
+		pathPart = strings.Replace(pathPart, ".spec.ts", "", 1)
+		result += utils.ToKebabCase(pathPart)
+		if i+1 < len(pathParts) {
+			result += "/"
+		}
+	}
+	return result
 }

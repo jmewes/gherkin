@@ -42,6 +42,45 @@ func TestMinimalTestFile(t *testing.T) {
 	}
 }
 
+func TestResourcePathSimpleFeature(t *testing.T) {
+	// Given a test file with a single "describe" block
+	// And a single test
+	specPath := "testdata/resource_Name_test/one_feature-with-one-test.spec.ts"
+
+	// When the spec file gets parsed
+	docs := mustParseSpecFile(specPath)
+
+	// Then the resource path has the path elements separated by slashes,
+	// And the path elements themselves should be in lower-kebab-case
+	// And ignores the TypeScript specific file suffix
+	if len(docs) != 1 {
+		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
+	}
+	doc := docs[0]
+	if doc.Uri != "testdata/resource-name-test/one-feature-with-one-test/just-a-test" {
+		t.Errorf("Unexpected resource path: '%s'", doc.Uri)
+	}
+}
+
+func TestResourcePathNestedDescribeBlock(t *testing.T) {
+	// Given a test file with a single "describe" block
+	// And a single test
+	specPath := "testdata/resource_Name_test/with-nested-describe-block.spec.ts"
+
+	// When the spec file gets parsed
+	docs := mustParseSpecFile(specPath)
+
+	// Then the resource path has the nested "describe" blocks as separate path elements,
+	// And the path elements have CamelCase converted to lower-kebab-case
+	if len(docs) != 1 {
+		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
+	}
+	doc := docs[0]
+	if doc.Uri != "testdata/resource-name-test/with-nested-describe-block/just-a-test/example-nested-block" {
+		t.Errorf("Unexpected resource path: '%s'", doc.Uri)
+	}
+}
+
 func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	// Given a "describe" block without tests (Foo)
 	// but a nested "describe" block with tests (Bar),
@@ -49,10 +88,7 @@ func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	specPath := "testdata/nested-describe-blocks.spec.ts"
 
 	// When the spec file gets parsed,
-	docs, err := ParseSpecFile(specPath)
-	if err != nil {
-		t.Fatalf("ParseSpecFile failed: %v", err)
-	}
+	docs := mustParseSpecFile(specPath)
 
 	// Then "Foo" is not interpreted as feature because it has no tests
 	if len(docs) != 2 {
@@ -99,4 +135,12 @@ func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	if oogleScenarios[0].Name != "quuux" {
 		t.Errorf("Expected scenario name 'quuux', got '%s'", oogleScenarios[0].Name)
 	}
+}
+
+func mustParseSpecFile(path string) []*messages.GherkinDocument {
+	docs, err := ParseSpecFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return docs
 }
