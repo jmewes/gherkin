@@ -21,6 +21,22 @@ Key features
 - Create test file scaffold from feature files (Angular, Go, Java)
 - Export feature files into Jira syntax
 
+## Overview
+
+The tool allows reverse engineering of existing code into specification documents:
+
+| <img src="./docs/300x180.png" /> | <img src="./docs/300x180.png" /> | <img src="./docs/spec.png" /> |
+| --- | --- | --- |
+| Existing code → | Feature files → | Specification |
+
+This is done to explore the possibility of specification-driven development based on Gherkin scenarios:
+
+| <img src="./docs/spec.png" /> | <img src="./docs/300x180.png" /> | <img src="./docs/300x180.png" /> |
+| --- | --- | --- |
+| Specification →  | Test definition → | Generated code |
+
+(Placeholder images created by https://placehold.co)
+
 ## Installation
 
 ```sh
