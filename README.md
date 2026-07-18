@@ -25,15 +25,17 @@ Key features
 
 The tool allows reverse engineering of existing code into specification documents:
 
-| <img src="./docs/reverse-engineering-spec.png" width="30%" /> | <img src="./docs/reverse-engineering-spec.png" width="30%" /> | <img src="./docs/reverse-engineering-spec.png" width="30%" /> |
+| <img src="./docs/reverse-engineering-spec.png" width="30%" /> | <img src="./docs/600x400.svg" width="30%" /> | <img src="./docs/reverse-engineering-spec.png" width="30%" /> |
 | --- | --- | --- |
 | Existing code | Feature files | Specification |
 
 This is done to explore the possibility of specification-driven development based on Gherkin scenarios:
 
-| <img src="./docs/reverse-engineering-spec.png" width="30%" /> | <img src="./docs/reverse-engineering-spec.png" width="30%" /> | <img src="./docs/reverse-engineering-spec.png" width="30%" /> |
+| <img src="./docs/600x400.svg" width="30%" /> | <img src="./docs/600x400.svg" width="30%" /> | <img src="./docs/600x400.svg" width="30%" /> |
 | --- | --- | --- |
 | Specification  | Test definition | Generated code |
+
+(Placeholder images created by https://placehold.co)
 
 ## Installation
 
