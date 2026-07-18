@@ -16,6 +16,7 @@
 package utils
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -23,11 +24,21 @@ import (
 func ToKebabCase(s string) string {
 	runes := make([]rune, 0, len(s))
 	for _, r := range s {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			runes = append(runes, unicode.ToLower(r))
+		if unicode.IsLetter(r) {
+			if unicode.IsUpper(r) {
+				runes = append(runes, '-')
+				runes = append(runes, unicode.ToLower(r))
+			} else {
+				runes = append(runes, r)
+			}
+		} else if unicode.IsDigit(r) {
+			runes = append(runes, r)
 		} else {
 			runes = append(runes, '-')
 		}
 	}
-	return strings.Trim(string(runes), "-")
+
+	result := strings.Trim(string(runes), "-")
+	result = regexp.MustCompile(`-+`).ReplaceAllString(result, "-")
+	return result
 }
