@@ -31,7 +31,7 @@ The tool allows reverse engineering of existing code into specification document
 
 This is done to explore the possibility of specification-driven development based on Gherkin scenarios:
 
-| <img src="./docs/spec.png" width="30%" /> | <img src="./docs/300x180.svg" width="30%" /> | <img src="./docs/300x180.svg" width="30%" /> |
+| <img src="./docs/spec.png" /> | <img src="./docs/300x180.svg" /> | <img src="./docs/300x180.svg" /> |
 | --- | --- | --- |
 | Specification →  | Test definition → | Generated code |
 
