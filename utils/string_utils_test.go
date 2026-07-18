@@ -36,7 +36,7 @@ func TestConvertStringToKebabCase(t *testing.T) {
 			expected: "just-a-test",
 		},
 		{
-			name:     "TBD",
+			name:     "directory name with underscores",
 			s:        "resource_Name_test",
 			expected: "resource-name-test",
 		},
