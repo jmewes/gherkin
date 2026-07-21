@@ -84,6 +84,10 @@ gh issue view ${ISSUE_NUMBER} --json url
 
 - [Process Extraction from Text | Patrizio Bellan et al. | arxiv.org](https://arxiv.org/pdf/2110.03754)
 
+**Literate programming**
+
+- [Knuth on Literate Programming | Turing Awardee Clips| youtube.com](https://www.youtube.com/watch?v=Mr3WTR0a5SM)
+
 ## Credits
 
 - The Given/When/Then notation originates from the concept of Behavior-Driven-Development (BDD) invented by Daniel Terhorst-North and Chris Matts (see [martinfowler.com](https://martinfowler.com/bliki/GivenWhenThen.html)). 
