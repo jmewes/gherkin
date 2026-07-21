@@ -1,6 +1,6 @@
 # Gherkin
 
-> CLI tool for the generation of [Gherkin feature-files](https://cucumber.io/docs/gherkin/reference/#feature) from existing test suites and specification documents from feature-files.
+> Generates [Gherkin feature-files](https://cucumber.io/docs/gherkin/reference/#feature) from existing test suites and specification documents from feature-files.
 
 The tool is not generally applicable to all projects in the world, but makes the assumption that projects that use the "gherkin" tool write the tests having the Gherkin style in mind:
 
