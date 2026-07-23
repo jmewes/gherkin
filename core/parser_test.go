@@ -12,7 +12,7 @@ func TestMinimalTestFile(t *testing.T) {
 	specPath := "testdata/sample.spec.ts"
 
 	// When the Gherkin document is parsed
-	docs, err := ParseSpecFile(specPath)
+	docs, err := ParseSpecFile(specPath, false)
 	if err != nil {
 		t.Fatalf("ParseSpecFile failed: %v", err)
 	}
@@ -39,6 +39,46 @@ func TestMinimalTestFile(t *testing.T) {
 
 	if doc.Feature.Children[1].Scenario.Name != "handle invalid credentials" {
 		t.Errorf("Expected second scenario name 'handle invalid credentials', got '%s'", doc.Feature.Children[1].Scenario.Name)
+	}
+}
+
+func TestParseSpecFile_relaxed_enabled(t *testing.T) {
+	// Given a test file with a test without Gherkin steps
+	// And a test with Gherkin steps
+	specPath := "testdata/test-without-gherkin-steps.spec.ts"
+	// And the relaxed option is enabled
+	option := withRelaxedOption(true)
+
+	// When the spec file gets parsed
+	docs := mustParseSpecFile(specPath, option)
+
+	// Then the without Gherkin steps is included (beside the test with Gherkin steps)
+	if len(docs) != 1 {
+		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
+	}
+	doc := docs[0]
+	if len(doc.Feature.Children) != 2 {
+		t.Fatalf("Expected 2 scenarios, got %d", len(doc.Feature.Children))
+	}
+}
+
+func TestParseSpecFile_relaxed_disabled(t *testing.T) {
+	// Given a test file with a test without Gherkin steps
+	// And a test with Gherkin steps
+	specPath := "testdata/test-without-gherkin-steps.spec.ts"
+	// And the relaxed option is disabled
+	option := withRelaxedOption(false)
+
+	// When the spec file gets parsed
+	docs := mustParseSpecFile(specPath, option)
+
+	// Then the without Gherkin steps is included (beside the test with Gherkin steps)
+	if len(docs) != 1 {
+		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
+	}
+	doc := docs[0]
+	if len(doc.Feature.Children) != 1 {
+		t.Fatalf("Expected 1 scenario, got %d", len(doc.Feature.Children))
 	}
 }
 
@@ -137,8 +177,25 @@ func TestSeparateFeaturesForNestedDescribeBlocks(t *testing.T) {
 	}
 }
 
-func mustParseSpecFile(path string) []*messages.GherkinDocument {
-	docs, err := ParseSpecFile(path)
+type parseOption func(*parseConfig)
+
+type parseConfig struct {
+	relaxed bool
+}
+
+func withRelaxedOption(relaxed bool) parseOption {
+	return func(c *parseConfig) {
+		c.relaxed = relaxed
+	}
+}
+
+func mustParseSpecFile(path string, opts ...parseOption) []*messages.GherkinDocument {
+	cfg := &parseConfig{relaxed: false}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	docs, err := ParseSpecFile(path, cfg.relaxed)
 	if err != nil {
 		panic(err)
 	}
