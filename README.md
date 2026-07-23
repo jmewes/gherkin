@@ -51,7 +51,7 @@ gh issue view ${ISSUE_NUMBER} --json url
 
 **Literate programming**
 
-- [Knuth on Literate Programming | Turing Awardee Clips| youtube.com](https://www.youtube.com/watch?v=Mr3WTR0a5SM)
+- [Knuth on Literate Programming | Turing Awardee Clips | youtube.com](https://www.youtube.com/watch?v=Mr3WTR0a5SM)
 
 ## Credits
 
