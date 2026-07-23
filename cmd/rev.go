@@ -11,12 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var RelaxedMode bool
+
 var revCmd = &cobra.Command{
 	Use:   "rev [flags]",
 	Short: "Reverse engineer feature files from source code",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		docs, err := parseSpecSources(SourceParameter)
+		docs, err := parseSpecSources(SourceParameter, RelaxedMode)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -32,14 +34,14 @@ var revCmd = &cobra.Command{
 	},
 }
 
-func parseSpecSources(source string) ([]*messages.GherkinDocument, error) {
+func parseSpecSources(source string, relaxed bool) ([]*messages.GherkinDocument, error) {
 	info, err := os.Stat(source)
 	if err != nil {
 		return nil, err
 	}
 
 	if !info.IsDir() {
-		return core.ParseSpecFile(source)
+		return core.ParseSpecFile(source, relaxed)
 	}
 
 	var docs []*messages.GherkinDocument
@@ -51,7 +53,7 @@ func parseSpecSources(source string) ([]*messages.GherkinDocument, error) {
 			return nil
 		}
 
-		parsedDocs, parseErr := core.ParseSpecFile(path)
+		parsedDocs, parseErr := core.ParseSpecFile(path, relaxed)
 		// Use any documents the parser managed to produce even when it
 		// reports an error, so partially-invalid spec files still yield
 		// their recognisable features instead of aborting the walk.
@@ -177,6 +179,7 @@ func renderFeatureDocument(doc *messages.GherkinDocument) string {
 	}
 
 	b.WriteString("\n")
+
 	return b.String()
 }
 
@@ -185,6 +188,8 @@ func init() {
 	revCmd.Flags().StringVarP(&TargetParameter, "target", "t", "", "Path to target directory")
 	_ = revCmd.MarkFlagRequired("source")
 	_ = revCmd.MarkFlagRequired("target")
+
+	revCmd.Flags().BoolVar(&RelaxedMode, "relaxed", false, "Relaxed mode")
 
 	rootCmd.AddCommand(revCmd)
 }

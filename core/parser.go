@@ -65,7 +65,7 @@ type frame struct {
 
 // ParseSpecFile reads a Jasmine *.spec.ts file and converts its
 // describe/it/beforeEach structure into GherkinDocuments.
-func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
+func ParseSpecFile(path string, relaxed bool) ([]*messages.GherkinDocument, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func ParseSpecFile(path string) ([]*messages.GherkinDocument, error) {
 
 			switch top.kind {
 			case frameIt:
-				if len(top.steps) > 0 {
+				if len(top.steps) > 0 || relaxed {
 					scenario := &messages.Scenario{
 						Name:  normalizeScenarioTitle(top.name),
 						Steps: top.steps,
