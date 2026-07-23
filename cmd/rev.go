@@ -11,14 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RelaxedMode bool
+var RelaxedOption bool
 
 var revCmd = &cobra.Command{
 	Use:   "rev [flags]",
 	Short: "Reverse engineer feature files from source code",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		docs, err := parseSpecSources(SourceParameter, RelaxedMode)
+		docs, err := parseSpecSources(SourceParameter, RelaxedOption)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -189,7 +189,7 @@ func init() {
 	_ = revCmd.MarkFlagRequired("source")
 	_ = revCmd.MarkFlagRequired("target")
 
-	revCmd.Flags().BoolVar(&RelaxedMode, "relaxed", false, "Relaxed mode")
+	revCmd.Flags().BoolVar(&RelaxedOption, "relaxed", false, "Relaxed mode")
 
 	rootCmd.AddCommand(revCmd)
 }

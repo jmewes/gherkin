@@ -44,14 +44,15 @@ func TestMinimalTestFile(t *testing.T) {
 
 func TestParseSpecFile_relaxed_enabled(t *testing.T) {
 	// Given a test file with a test without Gherkin steps
+	// And a test with Gherkin steps
 	specPath := "testdata/test-without-gherkin-steps.spec.ts"
-	// And the relaxed mode is enabled
-	option := withRelaxed(true)
+	// And the relaxed option is enabled
+	option := withRelaxedOption(true)
 
 	// When the spec file gets parsed
 	docs := mustParseSpecFile(specPath, option)
 
-	// Then the test is included
+	// Then the without Gherkin steps is included (beside the test with Gherkin steps)
 	if len(docs) != 1 {
 		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
 	}
@@ -63,14 +64,15 @@ func TestParseSpecFile_relaxed_enabled(t *testing.T) {
 
 func TestParseSpecFile_relaxed_disabled(t *testing.T) {
 	// Given a test file with a test without Gherkin steps
+	// And a test with Gherkin steps
 	specPath := "testdata/test-without-gherkin-steps.spec.ts"
-	// And the relaxed mode is disabled
-	option := withRelaxed(false)
+	// And the relaxed option is disabled
+	option := withRelaxedOption(false)
 
 	// When the spec file gets parsed
 	docs := mustParseSpecFile(specPath, option)
 
-	// Then the test is included
+	// Then the without Gherkin steps is included (beside the test with Gherkin steps)
 	if len(docs) != 1 {
 		t.Fatalf("Expected 1 GherkinDocument, got %d", len(docs))
 	}
@@ -181,7 +183,7 @@ type parseConfig struct {
 	relaxed bool
 }
 
-func withRelaxed(relaxed bool) parseOption {
+func withRelaxedOption(relaxed bool) parseOption {
 	return func(c *parseConfig) {
 		c.relaxed = relaxed
 	}
